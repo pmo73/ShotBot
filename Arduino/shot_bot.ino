@@ -1,72 +1,51 @@
 #include <AccelStepper.h>
+#include <Servo.h> 
+
+
 #define dirPin 2
 #define stepPin 3
+#define FINGER_MIN_POS 13
 #define motorInterfaceType 1
 AccelStepper stepper = AccelStepper(motorInterfaceType, stepPin, dirPin);
+Servo servo_under_arm;
+Servo servo_finger;
+Servo servo_arm;
 int tasterPin = 8;
+bool calibrated = false;
 void setup() {  
   
-  stepper.setMaxSpeed(200);
-  stepper.setSpeed(200);
-  stepper.setAcceleration(20);
-  stepper.moveTo(-50);
-  Serial.begin(115200);
-  Serial.print("\n");
-  pinMode(tasterPin, INPUT_PULLUP);
+    stepper.setMaxSpeed(100);
+    stepper.setAcceleration(100);
+    stepper.move(-1000);
+    pinMode(tasterPin, INPUT_PULLUP);
+
+    servo_finger.attach(5);
+    servo_under_arm.attach(6);
+    servo_arm.attach(9);
+    servo_finger.write(FINGER_MIN_POS);
+    servo_under_arm.write(0);
+    servo_arm.write(0);
 }
 
 void loop() {
+  
+    //servo_arm.write(37);
+    //servo_under_arm.write(17);
+    servo_finger.write(14);
     stepper.runSpeedToPosition();
-    if (digitalRead(tasterPin) == LOW) { 
-      Serial.print("Pressed ");
-      Serial.flush();
-      stepper.moveTo(20);
+    if (!calibrated && digitalRead(tasterPin) == LOW) { 
+      stepper.setCurrentPosition(0);
+      stepper.moveTo(1);
+      calibrated = true;
+      delay(500);
+    }
+    
+    if(calibrated) {
+      for(int i = 0; i < 12; ++i) {
+        if(stepper.distanceToGo() == 0) {
+          stepper.runToNewPosition(30 + i * 40 * 1.07);  
+          delay(1000);
+        }
+      }            
     }
 }
-
-/*#include <Servo.h> 
-
-Servo servo1;
-Servo servo2;
-Servo servo3;
-Servo servo4;
-
-void setup() {
-  servo1.attach(3);
-  servo2.attac
-  h(5);
-  servo3.attach(6);
-  servo4.attach(9);
-}
-
-void loop() {
-  servo1.write(0);
-  servo2.write(0);
-  servo3.write(0);
-  servo4.write(0);
-  delay(1000);
-  servo1.write(30);
-  delay(1000);
-  servo1.write(60);
-  delay(1000);
-  servo1.write(90);
-  delay(1000);
-  servo1.write(120);
-  delay(1000);
-  servo1.write(150);
-  delay(1000);
-  servo1.write(180);
-  delay(1000);
-  servo1.write(210);
-  delay(1000);
-  servo1.write(240);
-  delay(1000);
-  servo1.write(270);
-  delay(1000);
-  servo1.write(300);
-  delay(1000);
-  servo1.write(330);
-  delay(1000);
-  servo1.write(360);
-  delay(1000);
-}*/
